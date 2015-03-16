@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1425897485 source:d:\gdrive\Документы\Универ\Операционные системы\os-homeworks\homework1\homework1\cat.c
+	<stdio.h>
+	<stdlib.h>
+	"helpers.h"
+
+1425897527 d:\gdrive\Документы\Универ\Операционные системы\os-homeworks\homework1\homework1\helpers.h
+	<unistd.h>
+
+1425897738 source:d:\gdrive\Документы\Универ\Операционные системы\os-homeworks\homework1\homework1\helpers.c
+	"helpers.h"
+	<stdlib.h>
+

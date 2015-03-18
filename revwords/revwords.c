@@ -23,7 +23,7 @@ int main()
             if (buffer[i] == separator) {
                 if (pos != 0) write_reversed();
                 pos = 0;
-                write_(STDOUT_FILENO, separator, 1);
+                write_(STDOUT_FILENO, &separator, 1);
             } else {
                 word[pos] = buffer[i];
                 pos++;

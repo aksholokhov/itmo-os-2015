@@ -18,7 +18,7 @@ int main () {
 
         write_conter = write_(STDOUT_FILENO, buf, read_counter);
 
-        if (write_conter != read_counter) {
+        if (write_conter < read_counter) {
             printf("write error");
             exit(1);
         }

@@ -1,17 +1,15 @@
-#include "helpers.h"
+#include <helpers.h>
 #include <stdlib.h>
-
 size_t read_to_char(int fd, const void * buf, size_t count, char separator) {
     if (count == 0) {
         return read(fd, buf, 0);
     }
 
-    size_t curr_count = 0;
+    int curr_count = 0;
     int pointer = 0;
     int stop = 0;
 
-    while (1) {
-        if (count <= 0 | curr_count <= 0 | stop) break;
+    do {
         curr_count = read(fd, buf + pointer, count);
 
         if (curr_count == -1) return -1;
@@ -26,7 +24,8 @@ size_t read_to_char(int fd, const void * buf, size_t count, char separator) {
 
         pointer += curr_count;
         count -= curr_count;
-    }
+    } while (count > 0 && curr_count > 0 && !stop);
+
     return pointer;
 }
 
@@ -42,7 +41,7 @@ size_t write_(int fd, const void * buf, size_t count) {
         return write(fd, buf, 0);
     }
 
-    while (count > 0 && curr_count > 0) {
+    do {
         curr_count = write(fd, buf + pointer, count);
 
         if (curr_count == -1) {
@@ -51,7 +50,7 @@ size_t write_(int fd, const void * buf, size_t count) {
 
         pointer += curr_count;
         count -= curr_count;
-    }
+    } while (count > 0 && curr_count > 0);
 
     return pointer;
 }

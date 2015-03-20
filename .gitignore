@@ -1,4 +1,8 @@
+/bin
+/obj
 *.swp
-
+*.cbp
+*.depend
+*.layouyt
 *.o
 *.so

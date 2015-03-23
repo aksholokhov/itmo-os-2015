@@ -1,4 +1,4 @@
-all: cat/cat revwords/revwords 
+all: cat/cat revwords/revwords lenwords/lenwords
 
-cat/cat revwords/revwords:
+cat/cat revwords/revwords lenwords/lenwords:
 	$(MAKE) -C $(dir $@) $(notdir $@)

@@ -30,7 +30,24 @@ size_t read_to_char(int fd, const void * buf, size_t count, char separator) {
 }
 
 size_t read_(int fd, void * buf, size_t count) {
-    return read_to_char(fd, buf, count, -1);
+	if (count == 0) {
+        return read(fd, buf, 0);
+    }
+
+    int curr_count = 0;
+    int pointer = 0;
+
+    do {
+        curr_count = read(fd, buf + pointer, count);
+
+        if (curr_count == -1) return -1;
+
+
+        pointer += curr_count;
+        count -= curr_count;
+    } while (count > 0 && curr_count > 0);
+
+    return pointer;
 }
 
 size_t write_(int fd, const void * buf, size_t count) {

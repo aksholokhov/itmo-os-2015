@@ -1,75 +1,94 @@
 #include <helpers.h>
-#include <stdlib.h>
-size_t read_to_char(int fd, const void * buf, size_t count, char separator) {
+
+#include <sys/types.h>
+#include <sys/wait.h>
+
+ssize_t read_until(int fd, void * buf, size_t count, char delimeter) {
+    size_t nall = 0;
+    size_t nread;
+    int delim_found = 0;
+
     if (count == 0) {
         return read(fd, buf, 0);
     }
 
-    int curr_count = 0;
-    int pointer = 0;
-    int stop = 0;
-
     do {
-        curr_count = read(fd, buf + pointer, count);
+        nread = read(fd, buf + nall, count);
 
-        if (curr_count == -1) return -1;
+        if (nread == -1) {
+            return -1;
+        }
 
-        int i = 0;
-        for (i = 0; i < curr_count; i++) {
-            if (((char *)buf)[pointer+i] == separator) {
-                stop = 1;
+        for (int i = 0; i < nread; i++) {
+            if (((char*) buf)[nall + i] == delimeter) {
+                delim_found = 1;
                 break;
             }
         }
 
-        pointer += curr_count;
-        count -= curr_count;
-    } while (count > 0 && curr_count > 0 && !stop);
+        nall += nread;
+        count -= nread;
+    } while (count > 0 && nread > 0 && !delim_found);
 
-    return pointer;
+    return nall;
 }
 
-size_t read_(int fd, void * buf, size_t count) {
-	if (count == 0) {
+ssize_t read_(int fd, void * buf, size_t count) {
+    size_t nall = 0;
+    size_t nread;
+
+    if (count == 0) {
         return read(fd, buf, 0);
     }
 
-    int curr_count = 0;
-    int pointer = 0;
-
     do {
-        curr_count = read(fd, buf + pointer, count);
+        nread = read(fd, buf + nall, count);
 
-        if (curr_count == -1) return -1;
+        if (nread == -1) {
+            return -1;
+        }
 
+        nall += nread;
+        count -= nread;
+    } while (count > 0 && nread > 0);
 
-        pointer += curr_count;
-        count -= curr_count;
-    } while (count > 0 && curr_count > 0);
-
-    return pointer;
+    return nall;
 }
 
-size_t write_(int fd, const void * buf, size_t count) {
-    int pointer = 0;
-    int curr_count = 0;
+ssize_t write_(int fd, const void * buf, size_t count) {
+    size_t nall = 0;
+    size_t nwritten;
 
     if (count == 0) {
         return write(fd, buf, 0);
     }
 
     do {
-        curr_count = write(fd, buf + pointer, count);
+        nwritten = write(fd, buf + nall, count);
 
-        if (curr_count == -1) {
+        if (nwritten == -1) {
             return -1;
         }
 
-        pointer += curr_count;
-        count -= curr_count;
-    } while (count > 0 && curr_count > 0);
+        nall += nwritten;
+        count -= nwritten;
+    } while (count > 0 && nwritten > 0);
 
-    return pointer;
+    return nall;
 }
 
-
+int spawn(const char * file, char * const argv []) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        execvp(file, argv);
+        return -1;
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            return WEXITSTATUS(status);
+        } else {
+            return -1;
+        }
+    }
+}

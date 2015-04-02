@@ -1,6 +1,3 @@
-*.swp
-*.cbp
-*.depend
-*.layouyt
+
 *.o
 *.so

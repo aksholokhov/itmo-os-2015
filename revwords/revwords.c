@@ -12,7 +12,7 @@ int main()
     char buffer[1024];
     int counter = 1;
     while (counter > 0) {
-        counter = read_to_char(STDIN_FILENO, buffer, sizeof(buffer), separator);
+        counter = read_until(STDIN_FILENO, buffer, sizeof(buffer), separator);
 
         if (counter < 0) {
             printf("read error");

@@ -31,12 +31,12 @@ void buf_free(struct buf_t *buf) {
     free(buf);
 }
 
-size_t buf_capacity(buf_t *buf) {
+size_t buf_capacity(struct buf_t *buf) {
     DEBUG_ASSERT(buf != NULL);
     return buf->capacity;
 }
 
-size_t buf_size(buf_t *buf) {
+size_t buf_size(struct buf_t *buf) {
     DEBUG_ASSERT(buf != NULL);
     return buf->size;
 }

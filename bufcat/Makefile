@@ -1,6 +1,6 @@
 CC = gcc
 CC_OPTS = -Wall -O2 -std=c99 -I../lib
-LD_OPTS = -L../lib -lhelpers
+LD_OPTS = -L../lib -lbufio
 
 PROGRAM = bufcat
 

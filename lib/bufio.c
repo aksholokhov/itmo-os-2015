@@ -41,7 +41,6 @@ size_t buf_size(struct buf_t *buf) {
     return buf->size;
 }
 
-
 ssize_t buf_fill(fd_t fd, struct buf_t * buf, size_t required) {
 	DEBUG_ASSERT(BUFF != NULL && required > buf->capacity);
 

@@ -92,3 +92,41 @@ int spawn(const char * file, char * const argv []) {
         }
     }
 }
+
+struct execargs_t {
+	char* file;
+	char** args;	
+};
+
+execargs_t* new_execargs_t (char* file, char** args) {
+	execargs_t* new_execargs = (execargs_t*)malloc(sizeof(execargs_t));
+	new_execargs->file = file;
+	new_execargs->args = args;
+	return new_execargs;
+}
+
+
+int exec(execargs_t* args) {
+	return spawn(args->file, args-> args);
+}
+
+int runpiped(execargs_t** programs, size_t n) {
+    int last_end = STDIN_FILENO;
+    int pipefd[2];
+    for (int i = 0; i < n; i++) {
+        if (pipe(pipefd) == -1) {
+            
+        }
+        pid_t pid = fork();
+        if (pid_t == -1) {
+
+        }
+        if (pid == 0) {
+            dup2(last_end, STDIN_FILENO);
+            dup2(pipefd[1], STDOUT_FILENO);
+            last_end = pipefd[0];
+            return exec(execargs[i]);
+        } 
+    }   
+    dup2(STDOUT_FILENO, last_end);
+}

@@ -14,12 +14,12 @@ struct buf_t {
 	size_t capacity;
 };
 
-struct buf_t *buf_new(size_t capacity); //— конструктор пустого буфера, возвращает NULL если не удалось сделать malloc,
+struct buf_t* buf_new(size_t capacity); //— конструктор пустого буфера, возвращает NULL если не удалось сделать malloc,
 void buf_free(struct buf_t * buf); // — деструктор.
 size_t buf_capacity(struct buf_t * buf);// — возвращает максимальный возможный размер,
 size_t buf_size(struct buf_t * buf); //— возвращает текущую заполненность,
 ssize_t buf_fill(fd_t fd, struct buf_t *buf, size_t required); // — заполняет буфер readами до тех пор пока его size не станет как минимум required байт
 ssize_t buf_flush(fd_t fd, struct buf_t *buf, size_t required); // - выписывает данные из буфера до тех пор, пока не будет записано как минимум required байт (больше — так больше) или буфер не опустеет.
-
+ssize_t buf_readline(char* dst, fd_t fd, struct buf_t * buf, size_t limit);
 #endif // BUFIO_H
 

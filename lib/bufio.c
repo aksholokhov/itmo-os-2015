@@ -1,5 +1,7 @@
 #include "bufio.h"
 #include <sys/types.h>
+#include <stdio.h>
+#include <helpers.h>
 
 #ifdef  DEBUG
 #define DEBUG_ASSERT(cond) if(!(cond)) abort();
@@ -39,6 +41,49 @@ size_t buf_capacity(struct buf_t *buf) {
 size_t buf_size(struct buf_t *buf) {
     DEBUG_ASSERT(buf != NULL);
     return buf->size;
+}
+// Reads a line from buffer. It uses in simplesh for commands parsing
+ssize_t buf_readline(char* dst, fd_t fd, struct buf_t * buf, size_t limit) {
+    //try to fill the buffer if it's empty
+     if (buf-> size == 0) {
+         int c = read_until(fd, buf->data, buf->capacity, '\n');
+         if (c == -1) {
+            return -1;
+         }
+         buf->size = c;
+         if (c == 0) {
+             return 0;
+         }
+     }
+    
+    //write to dst until '\n' or 0
+     int pos = 0;
+     int str_found = 0;
+     while (!str_found && pos < buf->size && limit > 0) {
+        dst[0] = ((char*)buf->data)[pos];
+        if (dst[0] == '\n' || dst[0] == 0 ) {
+            str_found = 1;
+        }
+        dst++;
+        pos++;
+        limit--;
+     }
+
+    //move the last part of the buffer to the start
+     memmove(buf->data, buf->data + pos, buf->size - pos);
+     buf->size -= pos;
+     //if buffer is empty and '\n' wasn't found - try to fill buffer again
+     if (!str_found && limit > 0) {
+        int c =  buf_readline(dst, fd, buf, limit);
+        if (c == -1) {
+            return -1;
+        } else {
+            return pos + c;
+        }
+     } else {
+         return pos;
+     }
+     
 }
 
 ssize_t buf_fill(fd_t fd, struct buf_t * buf, size_t required) {

@@ -1,6 +1,6 @@
 CC = gcc
-CC_OPTS = -Wall -O2 -std=c99 -I../lib
-LD_OPTS = -L../lib -lhelpers
+CC_OPTS = -Wall -g -O2 -std=c99 -I../lib
+LD_OPTS = -L../lib -lhelpers -lbufio
 
 PROGRAM = simplesh
 
@@ -10,11 +10,16 @@ clean:
 	rm -f $(PROGRAM)
 	rm -f $(PROGRAM).o
 
-$(PROGRAM): $(PROGRAM).o ../lib/libhelpers.so
+$(PROGRAM): $(PROGRAM).o ../lib/libbufio.so ../lib/libhelpers.so
 	$(CC) -o $@ $< $(LD_OPTS)
+
+$(PROGRAM).o: $(PROGRAM).c
+	$(CC) -o $@ -c $< $(CC_OPTS)
+
+../lib/libbufio.so:
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 ../lib/libhelpers.so:
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
-$(PROGRAM).o: $(PROGRAM).c
-	$(CC) -o $@ -c $< $(CC_OPTS)
+

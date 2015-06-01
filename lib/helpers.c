@@ -206,31 +206,33 @@ int runpiped(execargs_t** programs, size_t n) {
                 while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
                     for (int i = 0; i < n; i++) {
                         if (children[i] == pid) {
-                            children[i] = 0;
-                            alive--;
+                            children[i] = 0;    
                             break;
                         }
                     }
                 }
-                // return old actions to it's place and finish
-                sigaction(SIGINT, &oldaction, NULL);
-                sigprocmask(SIG_UNBLOCK, &mask, NULL);
-                return 0;
-            // the same for sigint
             case SIGINT:
-                for (int i = 0; i < n; i++) {
-                    if (children[i] > 0) {
-                        kill(children[i], SIGKILL);
-                    }
-                }
-                sigaction(SIGINT, &oldaction, NULL);
-                sigaction(SIGCHLD, &oldaction2, NULL);
-                sigprocmask(SIG_UNBLOCK, &mask, NULL);
-
-                return 0;
+                alive = 0;
         }
     }
-    return 0;
+
+    int status;
+    int retcode;
+    for (int i = 0; i < n; i++) {
+        if (children[i] > 0) {
+            kill(children[i], SIGKILL);
+            waitpid(children[i], &status, 0);
+            if (i == n-1) {
+                retcode = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+            }
+        }
+    } 
+
+    sigaction(SIGINT, &oldaction, NULL);
+    sigaction(SIGCHLD, &oldaction2, NULL);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+    return retcode;
 }
 
 execargs_t* makeExecFromStr(char* buf, int start, int end) {

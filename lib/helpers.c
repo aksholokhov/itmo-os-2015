@@ -1,9 +1,11 @@
 #define _POSIX_C_SOURCE 199309L
+#define _GNU_SOURCE
 #include <helpers.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 
 ssize_t read_until(int fd, void * buf, size_t count, char delimeter) {
@@ -120,10 +122,6 @@ int exec(execargs_t* args) {
 void signal_handler(int signo) {
     //do nothing
 }
-// Signal handler for SIGPIPE interception
-void pipe_handler(int signo) {
-    exit(1);
-}
 
 //Runs the sequence of the programs
 int runpiped(execargs_t** programs, size_t n) {
@@ -138,7 +136,7 @@ int runpiped(execargs_t** programs, size_t n) {
     
 
     struct sigaction action;
-    struct sigaction oldaction;
+    struct sigaction oldaction, oldaction2;
 
     action.sa_handler = signal_handler;
     sigemptyset(&action.sa_mask);
@@ -146,6 +144,7 @@ int runpiped(execargs_t** programs, size_t n) {
     
     // Save previous actions and deploys new
     sigaction(SIGINT, NULL, &oldaction);
+    sigaction(SIGCHLD, NULL, &oldaction2);
 
     sigaction(SIGINT, &action, NULL);
     sigaction(SIGCHLD, &action, NULL);
@@ -156,29 +155,25 @@ int runpiped(execargs_t** programs, size_t n) {
     int* pipes = (int*)malloc(sizeof(int)*2*(n-1));
 
     for (int i = 0; i < n-1; i+=1) {
-        if (pipe(pipefd) == -1) {
+        if (pipe2(pipefd, O_CLOEXEC) == -1) {
             for (int j = i-1; j>= 0; j--) {
                 close(pipes[2*j]);
                 close(pipes[2*j + 1]);
             }
-            exit(1);
+            return 1;
         }
         pipes[2*i] = pipefd[0];
         pipes[2*i+1] = pipefd[1];
     }
 
     // Invoke all programs
+    size_t alive = 0;
     for (int i = 0; i < n; i++) {
         pid_t pid = fork();
         if (pid == -1) {
             
         }
         if (pid == 0) {
-            // Create interception for SIGPIPE in child process
-            struct sigaction action2;
-            action2.sa_handler = pipe_handler;
-            action2.sa_flags = SA_SIGINFO;
-            sigaction(SIGPIPE, &action2, NULL);
             // Establish connections between threads
             if (i != 0) {
                 dup2(pipes[2*i - 2], STDIN_FILENO);
@@ -186,14 +181,11 @@ int runpiped(execargs_t** programs, size_t n) {
             if (i != n - 1) {
                 dup2(pipes[2*i + 1], STDOUT_FILENO);
             }
-            // close all unuseful pipes
-            for (int i = 0; i < 2*(n-1); i++) {
-                close(pipes[i]);
-            }
             // exec the program
             return execvp(programs[i]->file, programs[i]->args);          
         } else {
             children[i] = pid;
+            alive++;
         }
     }   
     // close all pipes after program starting
@@ -203,16 +195,22 @@ int runpiped(execargs_t** programs, size_t n) {
 
 
     // wait passively children finishing or SIGINT appearance
-    while (1) {
+    while (alive) {
         if (sigwaitinfo(&mask, &info) == -1) {
-            exit(1);
+            continue;
         }
+        int pid;
         switch(info.si_signo) {
             // if one of the children changed his state - terminate everything and exit
             case SIGCHLD:
-                
-                for (int i = 0; i < n; i++) {
-                    kill(children[i], SIGTERM);
+                while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+                    for (int i = 0; i < n; i++) {
+                        if (children[i] == pid) {
+                            children[i] = 0;
+                            alive--;
+                            break;
+                        }
+                    }
                 }
                 // return old actions to it's place and finish
                 sigaction(SIGINT, &oldaction, NULL);
@@ -221,14 +219,18 @@ int runpiped(execargs_t** programs, size_t n) {
             // the same for sigint
             case SIGINT:
                 for (int i = 0; i < n; i++) {
-                    kill(children[i], SIGTERM);
+                    if (children[i] > 0) {
+                        kill(children[i], SIGKILL);
+                    }
                 }
                 sigaction(SIGINT, &oldaction, NULL);
+                sigaction(SIGCHLD, &oldaction2, NULL);
                 sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
                 return 0;
         }
     }
+    return 0;
 }
 
 execargs_t* makeExecFromStr(char* buf, int start, int end) {

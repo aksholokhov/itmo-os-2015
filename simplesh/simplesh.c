@@ -5,6 +5,7 @@
 #include <bufio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <errno.h>
 
 //This invokes when SIGINT appears. It does nothing.
 void signal_handler(int signo) {
@@ -34,7 +35,12 @@ int main() {
         //read a line from buffer
         count = buf_readline(buf, STDIN_FILENO, buffer, sizeof(buf));
         if (count == -1) {
-            continue;    
+            if (errno != EINTR) {
+                break;
+            } else {
+                errno = 0;
+                continue;
+            }
         }
         //if it's just an '\n' - try again
         if (count == 1) {
@@ -51,7 +57,7 @@ int main() {
             return 0;
         }
 
-        //Splite line by '|' and parse programs
+        //Split line by '|' and parse programs
         int pos = -1;
         int pNum = 0;
         for (int i = 0; i < count; i++) {
@@ -65,4 +71,3 @@ int main() {
         runpiped(programs, pNum);
     }
 }
-

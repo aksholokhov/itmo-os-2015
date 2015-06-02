@@ -1,15 +1,16 @@
 #define _POSIX_SOURCE
 
 #include <bufio.h>
+
 #include <stdio.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
 
 const char usage[30] = "usage: filesender port file \n";
 
@@ -36,16 +37,14 @@ int main (int argc, char** argv) {
 
     
     int sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    
     if (sock == -1) {
         printf("Unable to open socket \n");
         return 1;
     }
 
     int one = 1;
-    int err = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
-    if (err == -1) {
-        printf("setsockopt error: %s \n", gai_strerror(err));
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) == -1) {
+        printf("setsockopt error \n");
         return 1;
     }
 
@@ -53,15 +52,19 @@ int main (int argc, char** argv) {
         AI_V4MAPPED | AI_ADDRCONFIG,
         AF_INET,
         SOCK_STREAM,
-        0, 0, 0, 0, 0           //other parameters are not used in gettadrinfo's hints
+        0,
+        0, 
+        0, 
+        0, 
+        0           
     };
+
     hints.ai_next = NULL;
         
     struct addrinfo* result;
 
-    err = getaddrinfo("localhost", NULL, &hints, &result);
-    if (err != 0) {
-        printf("getaddrinfo error:%s \n", gai_strerror(err));
+    if (getaddrinfo("localhost", NULL, &hints, &result) != 0) {
+        printf("getaddrinfo error \n");
         return 1;
     }
 
@@ -84,6 +87,7 @@ int main (int argc, char** argv) {
     printf("listening started \n");
     struct sockaddr_in client;
     socklen_t sz = sizeof(client);
+
     while(1) {
         int client_fd = accept(sock, (struct sockaddr *)&client, &sz);
         if (client_fd == -1) {
@@ -94,8 +98,7 @@ int main (int argc, char** argv) {
                 return 1;
             }
         }
-        int pid = fork();
-        if (pid == 0) {
+        if (fork() == 0) {
             printf("client %d connected \n", client_fd);
             int sendfile_fd = open(file, O_RDONLY);
             if (sendfile_fd == -1) {
@@ -126,5 +129,6 @@ int main (int argc, char** argv) {
             close(client_fd);
         }
     }
+    
     printf(" exiting...\n");
 }

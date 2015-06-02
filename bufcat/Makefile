@@ -1,6 +1,6 @@
 CC = gcc
 CC_OPTS = -Wall -O2 -std=c99 -I../lib
-LD_OPTS = -L../lib -lbufio
+LD_OPTS = -L../lib -lbufio -lhelpers
 
 PROGRAM = bufcat
 
@@ -10,7 +10,7 @@ clean:
 	rm -f $(PROGRAM)
 	rm -f $(PROGRAM).o
 
-$(PROGRAM): $(PROGRAM).o ../lib/libbufio.so
+$(PROGRAM): $(PROGRAM).o ../lib/libbufio.so ../lib/libhelpers.so
 	$(CC) -o $@ $< $(LD_OPTS)
 
 ../lib/libbufio.so:

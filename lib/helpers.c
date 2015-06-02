@@ -181,6 +181,7 @@ int runpiped(execargs_t** programs, size_t n) {
             if (i != n - 1) {
                 dup2(pipes[2*i + 1], STDOUT_FILENO);
             }
+            //sigprocmask(SIG_UNBLOCK, &mask, NULL);
             // exec the program
             return execvp(programs[i]->file, programs[i]->args);          
         } else {
@@ -206,11 +207,14 @@ int runpiped(execargs_t** programs, size_t n) {
                 while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
                     for (int i = 0; i < n; i++) {
                         if (children[i] == pid) {
-                            children[i] = 0;    
+                            children[i] = 0;
+                            alive--;
                             break;
                         }
                     }
                 }
+                // return old actions to it's place and finish
+                // the same for sigint
             case SIGINT:
                 alive = 0;
         }

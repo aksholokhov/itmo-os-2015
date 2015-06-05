@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 
 const char usage[30] = "usage: filesender port file \n";
+int server1, server2;
 
 int create_server(int port) {
 	int sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
@@ -59,7 +60,6 @@ int create_server(int port) {
         return 1;
     }
 
-    printf("listening started \n");
     return sock;
 }
 
@@ -96,7 +96,10 @@ void proceed_transmition(int in, int out) {
 }
 
 void empty_sigaction(int signo) {
-    //do nothing
+    close(server1);
+    close(server2);
+    printf(" exiting... \n");
+    exit(0);
 }
 
 int main (int argc, char** argv) {
@@ -117,8 +120,8 @@ int main (int argc, char** argv) {
     sigemptyset(&block.sa_mask);
     sigaction(SIGINT, &block, NULL);
 
-    int server1 = create_server(port);
-    int server2 = create_server(port2);
+    server1 = create_server(port);
+    server2 = create_server(port2);
 
     struct sockaddr_in client1, client2;
     while(1) {

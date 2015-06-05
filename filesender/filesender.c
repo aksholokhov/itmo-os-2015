@@ -13,9 +13,13 @@
 #include <signal.h>
 
 const char usage[30] = "usage: filesender port file \n";
+int sock;
+
 
 void empty_sigaction(int signo) {
-    //do nothing
+    close(sock);
+    printf("exiting... \n");
+    exit(0);
 }
 
 int main (int argc, char** argv) {
@@ -36,7 +40,7 @@ int main (int argc, char** argv) {
     sigaction(SIGINT, &block, NULL);
 
     
-    int sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
     if (sock == -1) {
         printf("Unable to open socket \n");
         return 1;

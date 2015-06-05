@@ -23,7 +23,7 @@ int ccounter;
 
 struct pollfd polls[2 * MAX_CLIENTS + 2];
 struct buf_t* buffers[2 * MAX_CLIENTS];
-
+int server1, server2;
 
 int create_server(int port) {
 	int sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
@@ -74,7 +74,6 @@ int create_server(int port) {
         return 1;
     }
 
-    printf("listening started \n");
     return sock;
 }
 
@@ -140,7 +139,10 @@ int get_and_poll(int sock) {
 }
 
 void empty_sigaction(int signo) {
-    //do nothing
+    close(server1);
+    close(server2);
+    printf(" exiting...\n");
+    exit(0);
 }
 
 void close_pair(int t) {
@@ -184,8 +186,8 @@ int main (int argc, char** argv) {
     sigemptyset(&block.sa_mask);
     sigaction(SIGINT, &block, NULL);
 
-    int server1 = create_server(port);
-    int server2 = create_server(port2);
+    server1 = create_server(port);
+    server2 = create_server(port2);
 
     polls[0].fd = server1;
     polls[1].fd = server2;

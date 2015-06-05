@@ -1,5 +1,5 @@
 CC = gcc
-CC_OPTS = -Wall -std=c99 -fpic -I.
+CC_OPTS = -Wall -Wextra -std=c99 -fpic -I.
 LD_OPTS = 
 
 all: libbufio.so libhelpers.so
@@ -10,8 +10,8 @@ clean:
 	rm -f bufio.o
 	rm -f helpers.o
 
-libbufio.so: bufio.o
-	$(CC) -o $@ -shared $< $(LD_OPTS)
+libbufio.so: bufio.o libhelpers.so
+	$(CC) -o $@ -shared $< $(LD_OPTS) 
 
 bufio.o: bufio.c
 	$(CC) -o $@ -c $< $(CC_OPTS)

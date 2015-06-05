@@ -25,49 +25,47 @@ struct pollfd polls[2 * MAX_CLIENTS + 2];
 struct buf_t* buffers[2 * MAX_CLIENTS];
 int server1, server2;
 
-int create_server(int port) {
-	int sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    
-    if (sock == -1) {
-        printf("Unable to open socket \n");
-        return -1;
+int make_socket(struct addrinfo* info) {
+    while (info) {
+        int sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+        if (sock == -1) continue;
+
+        int one = 1;
+        int s = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        if (s == -1) {
+            if (close(sock) == -1) return -1;
+            continue;
+        }
+
+        s = bind(sock, info->ai_addr, info->ai_addrlen);
+        if (s == 0) {
+            return sock;
+        }
+
+        if (close(sock) == -1) return -1;
+        info = info->ai_next;
     }
 
-    int one = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) == -1) {
-        printf("setsockopt error \n");
-        return -1;
-    }
+    return -1;
+}
 
-    struct addrinfo hints = {
-        AI_V4MAPPED | AI_ADDRCONFIG,
-        AF_INET,
-        SOCK_STREAM,
-        0, 
-        0, 
-        0, 
-        0, 
-        0           
-    };
-    hints.ai_next = NULL;
-        
+int create_server(const char* port) {
+	
+    struct addrinfo hints;
+    bzero(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
     struct addrinfo* result;
 
-    if (getaddrinfo("localhost", NULL, &hints, &result) != 0) {
+    if (getaddrinfo(NULL, port, &hints, &result) != 0) {
         printf("getaddrinfo error \n");
         return 1;
     }
 
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    memcpy(&addr, result->ai_addr, result->ai_addrlen);
-    freeaddrinfo(result);
-    addr.sin_port = htons(port);
-    
-    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        printf("bind error \n");
-        return 1;
-    }
+    int sock = make_socket(result);
 
     if (listen(sock, 1) == -1) {
         printf("listen error \n");
@@ -117,6 +115,8 @@ int get_and_poll(int sock) {
                     if (read_counter > 0) {
                         memcpy(buffers[i - 2]->data + buffers[i-2]->size, buf, read_counter);
                         buffers[i - 2]->size +=read_counter;
+                    } else if (read_counter == 0) {
+                        return -(i & ~1);
                     }
                 }
             }
@@ -175,9 +175,6 @@ int main (int argc, char** argv) {
         return 1;
     }
 
-    int port, port2;
-    sscanf(argv[1], "%d", &port);
-    sscanf(argv[2], "%d", &port2);
 
     struct sigaction block  = {
         .sa_handler = empty_sigaction,
@@ -186,8 +183,8 @@ int main (int argc, char** argv) {
     sigemptyset(&block.sa_mask);
     sigaction(SIGINT, &block, NULL);
 
-    server1 = create_server(port);
-    server2 = create_server(port2);
+    server1 = create_server(argv[1]);
+    server2 = create_server(argv[2]);
 
     polls[0].fd = server1;
     polls[1].fd = server2;

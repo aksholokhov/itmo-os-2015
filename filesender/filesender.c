@@ -15,6 +15,56 @@
 const char usage[30] = "usage: filesender port file \n";
 int sock;
 
+int make_socket(struct addrinfo* info) {
+    while (info) {
+        int sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+        if (sock == -1) continue;
+
+        int one = 1;
+        int s = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        if (s == -1) {
+            if (close(sock) == -1) return -1;
+            continue;
+        }
+
+        s = bind(sock, info->ai_addr, info->ai_addrlen);
+        if (s == 0) {
+            return sock;
+        }
+
+        if (close(sock) == -1) return -1;
+        info = info->ai_next;
+    }
+
+    return -1;
+}
+
+int create_server(const char* port) {
+	
+    struct addrinfo hints;
+    bzero(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    struct addrinfo* result;
+
+    if (getaddrinfo(NULL, port, &hints, &result) != 0) {
+        printf("getaddrinfo error \n");
+        return 1;
+    }
+
+    int sock = make_socket(result);
+
+    if (listen(sock, 1) == -1) {
+        printf("listen error \n");
+        return 1;
+    }
+
+    return sock;
+}
+
 
 void empty_sigaction(int signo) {
     close(sock);
@@ -28,65 +78,8 @@ int main (int argc, char** argv) {
         return 1;
     }
 
-    int port;
-    sscanf(argv[1], "%d", &port);
+    int sock = create_server(argv[1]); 
     char* file = argv[2];
-
-    struct sigaction block  = {
-        .sa_handler = empty_sigaction,
-        .sa_flags = 0,
-    };
-    sigemptyset(&block.sa_mask);
-    sigaction(SIGINT, &block, NULL);
-
-    
-    sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    if (sock == -1) {
-        printf("Unable to open socket \n");
-        return 1;
-    }
-
-    int one = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) == -1) {
-        printf("setsockopt error \n");
-        return 1;
-    }
-
-    struct addrinfo hints = {
-        AI_V4MAPPED | AI_ADDRCONFIG,
-        AF_INET,
-        SOCK_STREAM,
-        0,
-        0, 
-        0, 
-        0, 
-        0           
-    };
-
-    hints.ai_next = NULL;
-        
-    struct addrinfo* result;
-
-    if (getaddrinfo("localhost", NULL, &hints, &result) != 0) {
-        printf("getaddrinfo error \n");
-        return 1;
-    }
-
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    memcpy(&addr, result->ai_addr, result->ai_addrlen);
-    freeaddrinfo(result);
-    addr.sin_port = htons(port);
-    
-    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        printf("bind error \n");
-        return 1;
-    }
-
-    if (listen(sock, 1) == -1) {
-        printf("listen error \n");
-        return 1;
-    }
 
     printf("listening started \n");
     struct sockaddr_in client;

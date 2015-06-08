@@ -81,8 +81,10 @@ void proceed_transmition(int in, int out) {
     struct buf_t * buf = buf_new(4096);
 
     do {
+        int size_before = buf->size;
         read_counter = buf_fill(in, buf, 1);
-        if (((char*)buf->data)[buf->size-1] == 0) {
+      //  if (((char*)buf->data)[buf->size-1] == 0) {
+        if (size_before == read_counter) {
            // printf("aaaaa \n");
             write_counter = buf_flush(out, buf, buf->size-1);
             shutdown(in, SHUT_RDWR);

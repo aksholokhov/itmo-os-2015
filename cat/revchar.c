@@ -42,7 +42,7 @@ int main () {
         }
                 
         write_counter = write(STDOUT_FILENO, buf + shift, sp);
-    } while (write_counter == sp);   
+    } while (write_counter == sp && read_counter != 0);   
 
     return 0;
 }

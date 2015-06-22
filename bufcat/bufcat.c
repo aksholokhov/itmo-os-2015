@@ -2,18 +2,22 @@
 #include <stdlib.h>
 #include <bufio.h>
 int main () {
-    struct buf_t * buf = buf_new(2048);
-    int ret = 0;
-    int read_counter;
-    int write_counter;
-    do {
-        read_counter = buf_fill(STDIN_FILENO, buf, buf_capacity(buf));
-        write_counter = buf_flush(STDOUT_FILENO, buf, buf_size(buf));
-        if (read_counter == -1 || write_counter == -1) {
-           ret = 1;
-           break;
+
+    struct buf_t * buf = buf_new(4096);
+    while (1) {
+        int bfr = buf_fill(STDIN_FILENO, buf, buf_capacity(buf));
+        if (bfr < 0) {
+            if (buf_flush(STDOUT_FILENO, buf, buf_size(buf)) < 0) {
+                return 1;
+            }
+            return 2;
         }
-    } while (read_counter > 0);
-    buf_free(buf);
-    return ret;
+        if (bfr == 0) {
+            break;
+        }
+        if (buf_flush(STDOUT_FILENO, buf, buf_size(buf)) < 0) {
+            return 3;
+        }
+    }
+    return 0;
 }

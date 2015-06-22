@@ -88,19 +88,17 @@ size_t buf_size(struct buf_t *buf) {
 */
 ssize_t buf_fill(fd_t fd, struct buf_t * buf, size_t required) {
 	DEBUG_ASSERT(BUFF != NULL && required > buf->capacity);
-
-	buf->size = 0;
-    size_t read_counter;
-
-    do {
-        read_counter = read(fd, buf->data + buf->size, buf->capacity - buf->size);
-
-        if (read_counter == -1) {
+    
+    while (buf->size < required) {
+        ssize_t rres = read(fd, buf->data + buf->size, buf->capacity - buf->size);
+        if (rres < 0) {
             return -1;
+        } 
+        if (rres == 0) {
+            return buf->size;
         }
-
-        buf->size += read_counter;
-    } while (buf->size < required && read_counter > 0);
+        buf->size += rres;
+    }
 
     return buf->size;
 }
@@ -109,31 +107,17 @@ ssize_t buf_flush(fd_t fd, struct buf_t * buf, size_t required) {
 	DEBUG_ASSERT(buf != NULL);
 
 	size_t offset = 0;
-    size_t write_counter;
-    int error = 0;
 
-    if (required > buf->size) {
-        required = buf->size;
-    }
-
-    do {
-        write_counter = write(fd, buf->data + offset, buf->size);
-
-        if (write_counter == -1) {
-            error = 1;
-            break;
+    while (buf->size > 0 && offset < required) {
+        ssize_t wres = write(fd, buf->data + offset, buf->size - offset);
+        if (wres < 0) {
+            memmove(buf->data, buf->data + offset, buf->size - offset);
+            buf->size -= offset;
+            return -1;
         }
-
-        offset += write_counter;
-        buf->size -= write_counter;
-    } while (offset < required && write_counter > 0);
-
-    memcpy(buf->data, buf->data + offset, buf->size);
-
-    if (error) {
-        return -1;
-    } else {
-        return buf->size;
+        offset += wres;
     }
+    memmove(buf->data, buf->data + offset, buf->size - offset);
+    buf->size -= offset;
+    return offset;
 }
-

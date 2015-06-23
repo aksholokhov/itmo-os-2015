@@ -2,7 +2,7 @@ CC = gcc
 CC_OPTS = -Wall -O2 -std=c99 -I../lib
 LD_OPTS = -L../lib -lhelpers
 
-PROGRAM = revchargrep
+PROGRAM = cat
 
 all: $(PROGRAM)
 

@@ -2,7 +2,7 @@ CC = gcc
 CC_OPTS = -Wall -O2 -std=c99 -I../lib
 LD_OPTS = -L../lib -lbufio -lhelpers
 
-PROGRAM1 = messenger
+PROGRAM1 = forking
 PROGRAM2 = polling
 
 all: $(PROGRAM1) $(PROGRAM2)

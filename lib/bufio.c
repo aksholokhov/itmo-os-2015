@@ -43,10 +43,10 @@ size_t buf_size(struct buf_t *buf) {
     return buf->size;
 }
 // Reads a line from buffer. It uses in simplesh for commands parsing
-/*ssize_t buf_readline(char* dst, fd_t fd, struct buf_t * buf, size_t limit) {
+ssize_t buf_readline(char* dst, fd_t fd, struct buf_t * buf, size_t limit) {
     //try to fill the buffer if it's empty
      if (buf-> size == 0) {
-         int c = read_to_char(fd, buf->data, buf->capacity, '\n');
+         int c = read_until(fd, buf->data, buf->capacity, '\n');
          if (c == -1) {
             return -1;
          }
@@ -85,7 +85,7 @@ size_t buf_size(struct buf_t *buf) {
      }
      
 }
-*/
+
 ssize_t buf_fill(fd_t fd, struct buf_t * buf, size_t required) {
 	DEBUG_ASSERT(BUFF != NULL && required > buf->capacity);
     

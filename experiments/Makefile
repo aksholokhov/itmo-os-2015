@@ -1,8 +1,8 @@
 CC = g++
-CC_OPTS = -Wall -g -O2 -std=c99 -I../lib
+CC_OPTS = -Wall -g -O2 -I../lib
 LD_OPTS = -L../lib -lhelpers -lbufio
 
-PROGRAM = simplesh
+PROGRAM = sish
 
 all: $(PROGRAM)
 

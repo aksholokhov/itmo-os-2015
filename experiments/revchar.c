@@ -8,6 +8,7 @@ int main () {
     char buf[BUF_SIZE];
     int shift = BUF_SIZE/2;
     int sp = 0;
+    char b = 'b';
 
     int read_counter;
     int write_counter;
@@ -22,17 +23,17 @@ int main () {
         sp = 0;
 
         for (int i = 0; i < read_counter; i++) {
-            if (buf[i] == 'a') {
+            if (buf[i] == 'b') {
                 if (maybe_found == 0) {
                     maybe_found = 1;
                 } else {
-                    buf[shift + sp] = 'b';
+                    buf[shift + sp] = 'a';
                     sp++;
                     maybe_found = 0;
                 }
             } else {
                 if (maybe_found == 1) {
-                    buf[shift + sp] = 'a';
+                    buf[shift + sp] = 'b';
                     maybe_found = 0;
                     sp++;
                 }
@@ -44,7 +45,9 @@ int main () {
         write_counter = write(STDOUT_FILENO, buf + shift, sp);
     } while (write_counter == sp && read_counter != 0);   
 
-    
+    if (maybe_found == 1) {
+        write(STDOUT_FILENO, &b, 1);
+    }
 
     return 0;
 }

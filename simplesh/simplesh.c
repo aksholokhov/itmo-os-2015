@@ -49,7 +49,7 @@ int main() {
 
         //if it's a 0 symbol (CTRL-D) - exit
         if (count == 0) {
-            char exit_text[9] = " exit...\n";
+            char exit_text[10] = " exit...\n";
             int write_count = write(STDOUT_FILENO, exit_text, sizeof(exit_text)); 
             if (write_count == -1) {
                 exit(1);
